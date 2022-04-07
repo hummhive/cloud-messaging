@@ -1,0 +1,52 @@
+{
+  "name": "@honeyworks/cloud-messaging",
+  "version": "1.0.0-beta.4",
+  "description": "",
+  "private": false,
+  "module": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "webpack --watch",
+    "build": "webpack",
+    "prepublishOnly": "npm run build",
+    "publish:production": "npm publish",
+    "publish:next": "npm publish --tag next"
+  },
+  "keywords": [],
+  "author": "Pedro Roman <pedro.roman@humm.earth>",
+  "license": "ISC",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@babel/core": "^7.12.3",
+    "@babel/eslint-parser": "^7.15.0",
+    "@babel/preset-env": "^7.12.1",
+    "@babel/preset-react": "^7.12.1",
+    "babel-loader": "^8.1.0",
+    "clean-webpack-plugin": "^3.0.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-react": "^7.24.0",
+    "parse-domain": "^3.0.3",
+    "ts-loader": "^8.0.5",
+    "typescript": "^4.0.3",
+    "webpack": "^5.10.0",
+    "webpack-cli": "^4.2.0"
+  },
+  "dependencies": {
+    "react-color": "^2.19.3"
+  },
+  "humm-connection": {
+    "connectionType": "cell",
+    "cellType": "messaging",
+    "title": "Honeyworks Self Hosted SendGrid Plugin",
+    "dependencies": [
+      "@honeyworks/editor",
+      "host",
+      "data-bridge"
+    ],
+    "description": "Notify your Hive members whenever a new story is created",
+    "packageLocation": "",
+    "apiVersion": 1
+  }
+}

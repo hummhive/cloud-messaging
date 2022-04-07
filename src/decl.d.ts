@@ -1,0 +1,14 @@
+declare module 'recoil';
+declare module 'recoil-nexus';
+declare module 'inversify';
+declare module 'moment';
+declare module 'react';
+declare module 'react-dom';
+declare module 'tweetnacl';
+declare module 'tweetnacl-util';
+declare module '@hummhive/state/group';
+declare module '@hummhive/state/hive';
+declare module '@hummhive/state/invite';
+declare module '@hummhive/state/member';
+declare module '@hummhive/state/connection';
+declare module '@hummhive/state/ui';
