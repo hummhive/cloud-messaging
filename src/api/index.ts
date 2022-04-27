@@ -8,8 +8,8 @@ import packageJson from '../../package.json';
 export default class HoneyworksSendGridAPI {
   connectionDefinition;
   jobId: string;
-  _baseURL: string = 'https://api.sendgrid.com/v3';
-  // _baseURL: string = 'http://127.0.0.1:8787';
+  // _baseURL: string = 'https://api.sendgrid.com/v3';
+  _baseURL: string = 'http://127.0.0.1:8787';
 
   _secrets;
   _notifications;
@@ -19,6 +19,7 @@ export default class HoneyworksSendGridAPI {
   _blobAPI;
   _cellApi;
   _memberAPI;
+  _identityApi;
   _cryptoUtilsAPI;
   _secretsAPI;
   _eventsAPI;
@@ -34,6 +35,7 @@ export default class HoneyworksSendGridAPI {
     @inject(Symbol.for('event')) events,
     @inject(Symbol.for('crypto-util')) cryptoUtilsAPI,
     @inject(Symbol.for('secret')) secretsAPI,
+    @inject(Symbol.for('identity')) identityApi,
     @inject(Symbol.for('cell')) cell,
     @inject(Symbol.for('connection')) connectionAPI,
     @inject(Symbol.for('event')) eventsAPI,
@@ -44,6 +46,7 @@ export default class HoneyworksSendGridAPI {
     this._publisher = publisher;
     this._groupAPI = groupAPI;
     this._blobAPI = blobAPI;
+    this._identityApi = identityApi;
     this._memberAPI = memberAPI;
     this._cellApi = cell;
     this._cryptoUtilsAPI = cryptoUtilsAPI;
@@ -98,14 +101,21 @@ export default class HoneyworksSendGridAPI {
       });
   }
 
-  async setup(sendGridKeyId: string, sendGridKey: string) {
-    this._secretsAPI.add('hummhive', 'sendGridApiKey', sendGridKey);
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
-    const res = await fetch(`${this._baseURL}/api_keys/` + sendGridKeyId, {
-      method: 'GET',
+  async setup() {
+    const hive = await getRecoil(withActiveHive);
+    const myPublicKeys = await this._identityApi.getActivePublicKeys();
+    const signature = await this._identityApi.sign(Date.now().toString());
+    const encodedParams = `hiveId=${encodeURIComponent(
+      hive.header.id
+    )}&publicKey=${encodeURIComponent(
+      myPublicKeys.signing
+    )}`;
+
+    const res = await fetch(`${this._baseURL}/init?${encodedParams}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
+        'Authorization': signature,
       },
     }).then(async (res) => {
       if (!res.ok) {
@@ -117,14 +127,25 @@ export default class HoneyworksSendGridAPI {
     return res;
   }
 
-  async checkVerifiedSenders() {
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
-    const res = await fetch(`${this._baseURL}/verified_senders/steps_completed`, {
-      method: 'GET',
+  async createSender(name, email, country, address, city) {
+    const hive = await getRecoil(withActiveHive);
+    const myPublicKeys = await this._identityApi.getActivePublicKeys();
+    const signature = await this._identityApi.sign(Date.now().toString());
+    const encodedParams = `hiveId=${encodeURIComponent(
+      hive.header.id
+    )}&publicKey=${encodeURIComponent(
+      myPublicKeys.signing
+    )}`;
+
+    const res = await fetch(`${this._baseURL}/createSender?${encodedParams}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
+        'Authorization': signature,
       },
+      body: JSON.stringify({
+        name, email, country, address, city
+    }),
     }).then(async (res) => {
       if (!res.ok) {
         throw new Error("Unauthorized: Double check that your API ID and Key are correct!");
@@ -136,18 +157,24 @@ export default class HoneyworksSendGridAPI {
   }
 
   async syncContacts() {
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
+    const hive = await getRecoil(withActiveHive);
+    const myPublicKeys = await this._identityApi.getActivePublicKeys();
+    const signature = await this._identityApi.sign(Date.now().toString());
+    const encodedParams = `hiveId=${encodeURIComponent(
+      hive.header.id
+    )}&publicKey=${encodeURIComponent(
+      myPublicKeys.signing
+    )}`;
     const members = await this._memberAPI.list();
     const membersEmails = members.filter(x => x.content.email !== null)
     .map(str => ({email: str.content.email}))
     if(membersEmails.length === 0){
       return null;
     }
-    const res = await fetch(`${this._baseURL}/marketing/contacts`, {
-      method: 'PUT',
+    const res = await fetch(`${this._baseURL}/importContacts?${encodedParams}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
       },
       body: JSON.stringify({
         "contacts": membersEmails,
@@ -169,13 +196,23 @@ export default class HoneyworksSendGridAPI {
   }
 
   async contactStatus(jobId) {
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
-    const res = await fetch(`${this._baseURL}/marketing/contacts/imports/` + jobId, {
-      method: 'GET',
+    const hive = await getRecoil(withActiveHive);
+    const myPublicKeys = await this._identityApi.getActivePublicKeys();
+    const signature = await this._identityApi.sign(Date.now().toString());
+    const encodedParams = `hiveId=${encodeURIComponent(
+      hive.header.id
+    )}&publicKey=${encodeURIComponent(
+      myPublicKeys.signing
+    )}`;
+    const res = await fetch(`${this._baseURL}/getContactStatus?${encodedParams}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
       },
+      body: JSON.stringify({
+        jobId
+
+    }),
     }).then(async (res) => {
       if (!res.ok) {
         return;
@@ -186,145 +223,25 @@ export default class HoneyworksSendGridAPI {
     return res;
   }
 
-  async createSuppressionGroup() {
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
+  async deleteAccount() {
     const hive = await getRecoil(withActiveHive);
-    const groups = await this.getSuppressionGroups();
-    const supressionGroup = groups.find(group => group.name === "HummHive Supression Group");
-    if(supressionGroup)
-    await this.deleteSuppressionGroups(supressionGroup);
-    const res = await fetch(`${this._baseURL}/asm/groups`, {
-      method: 'POST',
+    const myPublicKeys = await this._identityApi.getActivePublicKeys();
+    const signature = await this._identityApi.sign(Date.now().toString());
+    const encodedParams = `hiveId=${encodeURIComponent(
+      hive.header.id
+    )}&publicKey=${encodeURIComponent(
+      myPublicKeys.signing
+    )}`;
+    const res = await fetch(`${this._baseURL}/deleteSubUser?${encodedParams}`, {
+      method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-      },
-      body: JSON.stringify({
-        "name": "HummHive Supression Group",
-        "description": "Default Supression Group for your Humm Hive",
-        "is_default": true,
-    }),
-    }).then(async (res) => {
-      if (!res.ok) {
-        return;
-      }
-      return await res.json();
-    });
-
-    return res;
-  }
-
-  async getSuppressionGroups() {
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
-    const res = await fetch(`${this._baseURL}/asm/groups`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
       },
     }).then(async (res) => {
       if (!res.ok) {
         return;
       }
       return res.json();
-    });
-
-    return res;
-  }
-
-  async deleteSuppressionGroups(group) {
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
-    const res = await fetch(`${this._baseURL}/asm/groups/${group.id}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-      },
-    }).then(async (res) => {
-      if (!res.ok) {
-        return;
-      }
-      return;
-    });
-
-    return res;
-  }
-
-  async getVerifiedSenders() {
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
-    const hive = await getRecoil(withActiveHive);
-    const res = await fetch(`${this._baseURL}/verified_senders`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-      },
-    }).then(async (res) => {
-      if (!res.ok) {
-        return;
-      }
-      return await res.json();
-    });
-
-    return res;
-  }
-
-  async createList() {
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
-    const hive = await getRecoil(withActiveHive);
-    const res = await fetch(`${this._baseURL}/marketing/lists`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-      },
-      body: JSON.stringify({
-        "name": hive.signingPublicKey,
-    }),
-    }).then(async (res) => {
-      if (!res.ok) {
-        return;
-      }
-      return await res.json();
-    });
-
-    return res;
-  }
-
-  async deleteList(id) {
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
-    const res = await fetch(`${this._baseURL}/marketing/lists/` + id, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-      },
-    }).then(async (res) => {
-      if (!res.ok) {
-        return;
-      }
-      return await res.json();
-    });
-
-    return res;
-  }
-
-  async sendSchedule(id) {
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
-    const res = await fetch(`${this._baseURL}/marketing/singlesends/${id}/schedule`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-      },
-      body: JSON.stringify({
-      "send_at": "now"
-    }),
-    }).then(async (res) => {
-      if (!res.ok) {
-        throw new Error("Error");
-      }
-      return await res.json();
     });
 
     return res;
@@ -332,18 +249,23 @@ export default class HoneyworksSendGridAPI {
 
   async sendAll(title: string, id: string, url: string, date: string, content: string) {
     const hive = await getRecoil(withActiveHive);
+    const myPublicKeys = await this._identityApi.getActivePublicKeys();
+    const signature = await this._identityApi.sign(Date.now().toString());
+    const encodedParams = `hiveId=${encodeURIComponent(
+      hive.header.id
+    )}&publicKey=${encodeURIComponent(
+      myPublicKeys.signing
+    )}`;
     const config = await this._connectionAPI.getConfig(
       this.connectionDefinition.connectionId
     );
     if(!content)
     throw new Error("Newsletter can't be sent without content!");
-    const apiKey = this._secretsAPI.get('hummhive', 'sendGridApiKey');
     const buildEmailTemplate = emailTemplate(hive, id, url, date, title, content);
-    const res = await fetch(`${this._baseURL}/marketing/singlesends`, {
+    const res = await fetch(`${this._baseURL}/send?${encodedParams}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
       },
       body: JSON.stringify({
       "name": title,
@@ -361,9 +283,8 @@ export default class HoneyworksSendGridAPI {
       if (!res.ok) {
         throw new Error("Error");
       }
-      const response = await res.json();
-      await this.sendSchedule(response.id);
-      return response;
+
+      return res.json();
     });
 
     return res;

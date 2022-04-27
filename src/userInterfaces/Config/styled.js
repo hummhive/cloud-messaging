@@ -4,23 +4,7 @@ export const Container = styled.div`
   display: flex;
   flex-direction: column;
   h3 {
-    color: rgba(0, 0, 0, 0.7);
-    font-size: 14px;
-    font-weight: 600;
     margin: 0;
-  }
-  p {
-    color: rgba(0, 0, 0, 0.7);
-    font-size: 12px;
-    font-weight: 400;
-    margin: 0;
-  }
-  ol {
-    color: rgba(0, 0, 0, 0.7);
-    font-size: 14px;
-    font-weight: 400;
-    padding-inline-start: 16px;
-    line-height: 1.7em;
   }
 `;
 
@@ -30,6 +14,16 @@ export const Spacer = styled.div`
 
 export const Row = styled.div`
   display: flex;
+  .select-component{
+    width: 100%;
+  }
+  .email-label{
+    width: 80px;
+    margin-right: 5px;
+  }
+  span{
+    padding-bottom: 10px;
+  }
 `;
 
 export const CardContainer = styled.div`

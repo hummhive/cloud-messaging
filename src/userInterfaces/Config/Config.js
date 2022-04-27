@@ -1,62 +1,48 @@
 import React from 'react';
-import { PrimaryButton, SecondaryButton, Card, Link, Notice, TextInput } from '@hummhive/ui-elements';
+import { PrimaryButton, WarningButton, Card, Link, Notice, TextInput } from '@hummhive/ui-elements';
+import Select from 'react-select'
 import { Container, Spacer, CardContainer, Row } from './styled';
 
 export default function Config({
 connectSendGridAccount,
-apiKeyIdInput,
+name,
+email,
+country,
+city,
 checkSenders,
 confirmSenders,
-apiKeyInput,
 connectionConfig,
 syncMembers,
+createSender,
 sendersList,
 isLoading,
-setKeyApiIdInput,
-setKeyApiInput
+setSubdomain,
+deleteUsers,
+setName,
+setCountry,
+setEmail,
+setAddress,
+address,
+setCity,
+options
 }) {
-  if (!connectionConfig?.content.api_key_id)
+
+  const handleRemove = async () => {
+    if (confirm('Are you sure you want to delete this email?')) {
+      deleteUsers();
+    }
+  };
+
+  if (!connectionConfig?.content.stepCompleted)
     return (
       <Container>
-        <h3>Step 1: Connect your Hive with Twilio SendGrid</h3>
-        <span>For starters, to use this plugin, you need a valid Sendgrid account and an API key.</span>
-        <span>If you don't have a SendGrind Account,{' '}
-            <Link
-              target="_blank"
-              href="https://sendgrid.com"
-            >
-              you can create one here.
-            </Link>
-            {' '} After that create your API Key
-            <Link target="_blank" href="https://app.sendgrid.com/settings/api_keys">
-            {' '} right here.
-            </Link>
-          </span>
-        <Spacer height={24} />
-        <Row>
-          <TextInput
-            placeholder="API Key ID"
-            value={apiKeyIdInput}
-            onChange={(e) => setKeyApiIdInput(e.target.value)}
-          />
-          </Row>
-          <Spacer height={24} />
-          <Row>
-            <TextInput
-              placeholder="API Key"
-              value={apiKeyInput}
-              type='password'
-              onChange={(e) => setKeyApiInput(e.target.value)}
-            />
-            </Row>
-            <Spacer height={24} />
-            <span>If you need additional help you can follow
-             <Link target="_blank" href="https://hostlaunch.io/docs/how-to-get-a-sendgrid-api-key/"> {' '} this tutorial</Link></span>
+        <h3>Step 1: Connect your Hive with Honeyworks SendGrid</h3>
+        <span>In order to use this functionality to your hive, neeed to create a...</span>
              <Spacer height={24} />
             <Row>
-          <PrimaryButton loading={isLoading} disabled={!apiKeyInput && !apiKeyIdInput} onClick={() => connectSendGridAccount()}>
+          <PrimaryButton loading={isLoading} onClick={() => connectSendGridAccount()}>
             Connect my Hive with SendGrid
-              </PrimaryButton>
+          </PrimaryButton>
           </Row>
       </Container>
     );
@@ -64,33 +50,71 @@ setKeyApiInput
 if (connectionConfig?.content.stepCompleted === 1)
   return (
     <Container>
-      <h3>Step 2: Send your first emails with Twilio SendGrid</h3>
-      <span>Before sending email you’ll need to create at least one sender identity.
-      If you haven't done it, you can do it <a href="https://app.sendgrid.com/guide" target="_blank">here.</a></span>
-    <Spacer height={8} />
-  <Row>
-  <span>Sender Verified: {connectionConfig.content.sender_verified  ? "✅" : "❌"}</span>
-  </Row>
-  <Spacer height={8} />
-  <Row>
-    <span>Domain Verified: {connectionConfig.content.domain_verified ? "✅" : "❌"} {!connectionConfig.content.domain_verified && connectionConfig.content.sender_verified && (
-          <i>(You can complete this step later!)</i>
-    )}</span>
-  </Row>
-            <Spacer height={24} />
-    {!connectionConfig.content.domain_verified && !connectionConfig.content.sender_verified && (
+      <h3>Step 2: Choose a Sender Identifier</h3>
+      <span>You're required to include your contact information, including a physical mailing address, inside every promotional email you send in order to comply with anti-spam laws such as CAN-SPAM and CASL</span>
+    <Spacer height={20} />
       <Row>
-    <PrimaryButton loading={isLoading} onClick={() => checkSenders()}>
-      Check Senders Identities
+    <span>From Name:</span>
+    </Row>
+  <Row>
+    <TextInput
+      placeholder={name}
+      value={name}
+      type='text'
+      onChange={(e) => setName(e.target.value)}
+    />
+  </Row>
+     <Spacer height={10} />
+      <Row>
+    <span>From Email:</span>
+    </Row>
+  <Row>
+    <TextInput
+      className="email-label"
+      value={email}
+      type='text'
+      onChange={(e) => setEmail(e.target.value).toLowerCase()}
+    />
+  <span style={{marginTop: "5px"}}>@em289.honeyworks.earth</span>
+  </Row>
+     <Spacer height={10} />
+  <Row>
+  <span>Country:</span>
+  </Row>
+  <Row>
+    <Select placeholder="Type to search..." className="select-component" openMenuOnClick={false} isSearchable options={options} value={country} onChange={(e) => setCountry(e)} />
+  </Row>
+     <Spacer height={10} />
+  <Row>
+    <span>Address:</span>
+    </Row>
+    <Row>
+    <TextInput
+      placeholder={address}
+      value={address}
+      type='text'
+      onChange={(e) => setAddress(e.target.value)}
+    />
+    </Row>
+         <Spacer height={10} />
+    <Row>
+<span>City:</span>
+</Row>
+<Row>
+<TextInput
+  placeholder={city}
+  value={city}
+  type='text'
+  onChange={(e) => setCity(e.target.value)}
+/>
+</Row>
+
+  <Spacer height={24} />
+      <Row>
+    <PrimaryButton loading={isLoading} onClick={() => createSender()}>
+      Continue
     </PrimaryButton>
   </Row>
-  )}
-  <Spacer height={10} />
-  <Row>
-    <PrimaryButton loading={isLoading} disabled={!connectionConfig.content.domain_verified && !connectionConfig.content.sender_verified} onClick={() => confirmSenders()}>
-    Continue
-    </PrimaryButton>
-    </Row>
     </Container>
   );
 
@@ -106,6 +130,10 @@ if (connectionConfig?.content.stepCompleted === 1)
       <PrimaryButton loading={isLoading} onClick={() => syncMembers()}>
         {isLoading ? "Syncing Hive Members with SendGrid" : "Sync Hive Members with SendGrid"}
       </PrimaryButton>
+    </Row>
+      <Spacer height={12} />
+      <Row>
+      <WarningButton onClick={() => deleteUsers()}>Delete Account</WarningButton>
     </Row>
       </Container>
     );

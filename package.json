@@ -1,6 +1,6 @@
 {
   "name": "@honeyworks/cloud-messaging",
-  "version": "1.0.0-beta.4",
+  "version": "1.0.0-beta.1",
   "description": "",
   "private": false,
   "module": "dist/index.js",
@@ -25,6 +25,7 @@
     "@babel/preset-react": "^7.12.1",
     "babel-loader": "^8.1.0",
     "clean-webpack-plugin": "^3.0.0",
+    "eslint": "^8.14.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-react": "^7.24.0",
     "parse-domain": "^3.0.3",
@@ -34,12 +35,14 @@
     "webpack-cli": "^4.2.0"
   },
   "dependencies": {
-    "react-color": "^2.19.3"
+    "react-color": "^2.19.3",
+    "react-select": "^5.3.0",
+    "react-select-country-list": "^2.2.3"
   },
   "humm-connection": {
     "connectionType": "cell",
     "cellType": "messaging",
-    "title": "Honeyworks Self Hosted SendGrid Plugin",
+    "title": "Honeyworks SendGrid Plugin",
     "dependencies": [
       "@honeyworks/editor",
       "host",
