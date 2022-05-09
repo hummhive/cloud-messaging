@@ -36,12 +36,12 @@ options
   if (!connectionConfig?.content.stepCompleted)
     return (
       <Container>
-        <h3>Step 1: Connect your Hive with Honeyworks SendGrid</h3>
-        <span>In order to use this functionality to your hive, neeed to create a...</span>
+        <h3>Step 1: Connect your Hive on Twilio SendGrid with Honeyworks Notify</h3>
+        <span>This Cell allows you to send newsletters using Twilio SendGrid</span>
              <Spacer height={24} />
             <Row>
           <PrimaryButton loading={isLoading} onClick={() => connectSendGridAccount()}>
-            Connect my Hive with SendGrid
+            Setup
           </PrimaryButton>
           </Row>
       </Container>
@@ -128,7 +128,7 @@ if (connectionConfig?.content.stepCompleted === 1)
       <Spacer height={24} />
       <Row>
       <PrimaryButton loading={isLoading} onClick={() => syncMembers()}>
-        {isLoading ? "Syncing Hive Members with SendGrid" : "Sync Hive Members with SendGrid"}
+        {isLoading ? "Syncing Hive Members with Twilio SendGrid" : "Sync Hive Members with Twilio SendGrid"}
       </PrimaryButton>
     </Row>
       <Spacer height={12} />

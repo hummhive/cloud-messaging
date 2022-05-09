@@ -1,6 +1,6 @@
 {
   "name": "@honeyworks/cloud-messaging",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "",
   "private": false,
   "module": "dist/index.js",
