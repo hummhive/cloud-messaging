@@ -58,7 +58,7 @@ export default class HoneyworksSendGridAPI {
 
     this.registerForEvents();
 
-    if (utilApi.isDev || utilApi.isStaging)
+    if (utilAPI.isDev || utilAPI.isStaging)
       this._baseURL =
         'https://honeyworks-messaging-staging.hummhive.workers.dev';
 
