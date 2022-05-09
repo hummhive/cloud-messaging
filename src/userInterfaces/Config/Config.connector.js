@@ -9,7 +9,7 @@ import {
 import propsMapper from '../../utils/propsMapper';
 import Config from './Config';
 
-const connectionId = 'honeyworks-cloud-messaging';
+const connectionId = 'honeyworks-cloud-notify';
 const mapProps = () => {
   const honeyworksSendGridAPI = useApi(Symbol.for('messaging'), connectionId);
   const notificationsAPI = useApi(Symbol.for('notification'));

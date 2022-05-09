@@ -9,7 +9,7 @@ export default class HoneyworksSendGridAPI {
   connectionDefinition;
   jobId: string;
   // _baseURL: string = 'https://api.sendgrid.com/v3';
-  _baseURL: string = 'http://127.0.0.1:8787';
+  _baseURL: string = 'https://honeyworks-messaging.hummhive.workers.dev';
 
   _secrets;
   _notifications;
@@ -57,6 +57,14 @@ export default class HoneyworksSendGridAPI {
       connectionAPI.packageJsonToConnectionDefinition(packageJson);
 
     this.registerForEvents();
+
+    if (utilApi.isDev || utilApi.isStaging)
+      this._baseURL =
+        'https://honeyworks-messaging-staging.hummhive.workers.dev';
+
+    // local cf worker development
+    // this._baseURL = 'http://127.0.0.1:8788';
+
   }
 
   async getUI(dirName: string): Promise<any> {
