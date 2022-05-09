@@ -1,6 +1,6 @@
 {
-  "name": "@honeyworks/cloud-messaging",
-  "version": "1.0.0-beta.2",
+  "name": "@honeyworks/cloud-notify",
+  "version": "1.0.0-beta.0",
   "description": "",
   "private": false,
   "module": "dist/index.js",
@@ -42,7 +42,7 @@
   "humm-connection": {
     "connectionType": "cell",
     "cellType": "messaging",
-    "title": "Honeyworks SendGrid Plugin",
+    "title": "Honeyworks Notify",
     "dependencies": [
       "@honeyworks/editor",
       "host",
