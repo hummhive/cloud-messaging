@@ -1,21 +1,20 @@
 import { injectable, inject, optional } from 'inversify';
 import { getRecoil } from 'recoil-nexus';
-import emailTemplate from '../utils/emailTemplate'
 import { withActiveHive } from '@hummhive/state/hive';
+import appendProvider from '../utils/appendProvider';
 import packageJson from '../../package.json';
 
 @injectable()
 export default class HoneyworksSendGridAPI {
   connectionDefinition;
   jobId: string;
-  // _baseURL: string = 'https://api.sendgrid.com/v3';
   _baseURL: string = 'https://honeyworks-messaging.hummhive.workers.dev';
-
   _secrets;
   _notifications;
   _hive;
   _publisher;
   _groupAPI;
+  _groupMemberAPI;
   _blobAPI;
   _cellApi;
   _memberAPI;
@@ -32,6 +31,7 @@ export default class HoneyworksSendGridAPI {
     @inject(Symbol.for('blob')) blobAPI,
     @inject(Symbol.for('group')) groupAPI,
     @inject(Symbol.for('member')) memberAPI,
+    @inject(Symbol.for('group-member')) groupMemberAPI,
     @inject(Symbol.for('event')) events,
     @inject(Symbol.for('crypto-util')) cryptoUtilsAPI,
     @inject(Symbol.for('secret')) secretsAPI,
@@ -45,6 +45,7 @@ export default class HoneyworksSendGridAPI {
     this._hive = hive;
     this._publisher = publisher;
     this._groupAPI = groupAPI;
+    this._groupMemberAPI = groupMemberAPI;
     this._blobAPI = blobAPI;
     this._identityApi = identityApi;
     this._memberAPI = memberAPI;
@@ -62,8 +63,8 @@ export default class HoneyworksSendGridAPI {
       this._baseURL =
         'https://honeyworks-messaging-staging.hummhive.workers.dev';
 
-    // local cf worker development
-    // this._baseURL = 'http://127.0.0.1:8788';
+     //local cf worker development
+     // this._baseURL = 'http://127.0.0.1:8787';
 
   }
 
@@ -80,6 +81,14 @@ export default class HoneyworksSendGridAPI {
   registerForEvents() {
     this._eventsAPI.on(
       'memberAdded',
+      this.handleMembersSyncEvent.bind(this)
+    );
+    this._eventsAPI.on(
+      'groupAdded',
+      this.handleMembersSyncEvent.bind(this)
+    );
+    this._eventsAPI.on(
+      'groupUpdated',
       this.handleMembersSyncEvent.bind(this)
     );
   }
@@ -173,19 +182,31 @@ export default class HoneyworksSendGridAPI {
     )}&publicKey=${encodeURIComponent(
       myPublicKeys.signing
     )}`;
+
+    const getGroups = await this._groupAPI.list();
+
+    const getMembersAndGroups = await Promise.all(getGroups.map(async (group) => {
+      let groupMembers = await this._memberAPI.listByGroups([group.header.id]);
+      const membersEmails = groupMembers.filter(member => !!member.content.email)
+      .map(str => ({email: str.content.email}))
+      return ({list_name: group.content.name, list_ids: [`${hive.header.id}_${group.header.id}`], contacts: membersEmails});
+    }));
+
     const members = await this._memberAPI.list();
-    const membersEmails = members.filter(x => x.content.email !== null)
-    .map(str => ({email: str.content.email}))
+    const membersEmails = members.filter(x => !!x.content.email).map(str => ({email: str.content.email}))
+
     if(membersEmails.length === 0){
       return null;
     }
+
     const res = await fetch(`${this._baseURL}/importContacts?${encodedParams}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        "contacts": membersEmails,
+        "groups_and_contacts": getMembersAndGroups,
+        "all_contacts": membersEmails,
     }),
     }).then(async (res) => {
       if (!res.ok) {
@@ -218,7 +239,7 @@ export default class HoneyworksSendGridAPI {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        jobId
+        jobId: jobId[0].job_id
 
     }),
     }).then(async (res) => {
@@ -255,7 +276,7 @@ export default class HoneyworksSendGridAPI {
     return res;
   }
 
-  async sendAll(title: string, id: string, url: string, date: string, content: string) {
+  async send({title, content, groups, types}) {
     const hive = await getRecoil(withActiveHive);
     const myPublicKeys = await this._identityApi.getActivePublicKeys();
     const signature = await this._identityApi.sign(Date.now().toString());
@@ -269,7 +290,6 @@ export default class HoneyworksSendGridAPI {
     );
     if(!content)
     throw new Error("Newsletter can't be sent without content!");
-    const buildEmailTemplate = emailTemplate(hive, id, url, date, title, content);
     const res = await fetch(`${this._baseURL}/send?${encodedParams}`, {
       method: 'POST',
       headers: {
@@ -278,13 +298,57 @@ export default class HoneyworksSendGridAPI {
       body: JSON.stringify({
       "name": title,
       "send_to": {
+        "list_ids": groups,
+        "all": false,
+      },
+      "email_config": {
+        "subject": title,
+        "suppression_group_id": config.content.unsubscribe_group_id,
+        "sender_id": config.content.verified_sender_id,
+        "html_content": appendProvider(content),
+      }
+    }),
+    }).then(async (res) => {
+      if (!res.ok) {
+        throw new Error("Error");
+      }
+
+      return res.json();
+    });
+
+    return res;
+  }
+
+  async sendAll(title: string, content: string, types: string[]) {
+    const hive = await getRecoil(withActiveHive);
+    const myPublicKeys = await this._identityApi.getActivePublicKeys();
+    const signature = await this._identityApi.sign(Date.now().toString());
+    const encodedParams = `hiveId=${encodeURIComponent(
+      hive.header.id
+    )}&publicKey=${encodeURIComponent(
+      myPublicKeys.signing
+    )}`;
+    const config = await this._connectionAPI.getConfig(
+      this.connectionDefinition.connectionId
+    );
+    if(!content)
+    throw new Error("Newsletter can't be sent without content!");
+    const res = await fetch(`${this._baseURL}/send?${encodedParams}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+      "name": title,
+      "send_to": {
+        "list_ids": [],
         "all": true
       },
       "email_config": {
         "subject": title,
         "suppression_group_id": config.content.unsubscribe_group_id,
         "sender_id": config.content.verified_sender_id,
-        "html_content": buildEmailTemplate,
+        "html_content": appendProvider(content),
       }
     }),
     }).then(async (res) => {

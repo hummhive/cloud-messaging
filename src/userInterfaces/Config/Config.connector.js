@@ -74,12 +74,14 @@ const mapProps = () => {
     try {
       setIsLoading(true);
       const getJob = await honeyworksSendGridAPI.syncContacts();
-      if(!getJob)
+      if(!getJob){
+      setIsLoading(false);
       return notificationsAPI.add('No Hive Members with Email Address to Sync!', 'alert');
+      }
       await updateconnectionConfig(connectionId, {
         ...connectionConfig.content,
         members_synced: false,
-        jobId: getJob.result.job_id
+        jobId: getJob.result.jobs_id
       });
     } catch (err) {
       setIsLoading(false);
@@ -117,15 +119,17 @@ const mapProps = () => {
       let interval;
       watchSyncStatusInterval();
        async function watchSyncStatusInterval() {
+      const prevJobId = [...connectionConfig.content.jobId];
       const jobStage = await honeyworksSendGridAPI.contactStatus(connectionConfig.content.jobId);
       if (!interval){
           interval = setInterval(watchSyncStatusInterval, 5000);
           setIsLoading(true);
        } else if (jobStage.result.status === "completed") {
+           prevJobId.shift()
            await updateconnectionConfig(connectionId, {
              ...connectionConfig.content,
              members_synced: true,
-             jobId: null
+             jobId: prevJobId.length === 0 ? null : prevJobId,
            });
            setIsLoading(false);
            clearInterval(interval);
