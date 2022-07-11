@@ -9,9 +9,9 @@ import {
 import propsMapper from '../../utils/propsMapper';
 import Config from './Config';
 
-const connectionId = 'honeyworks-cloud-notify';
+const connectionId = 'honeyworks-notify';
 const mapProps = () => {
-  const honeyworksSendGridAPI = useApi(Symbol.for('messaging'), connectionId);
+  const honeyworksSendGridAPI = useApi(Symbol.for('notify'), connectionId);
   const notificationsAPI = useApi(Symbol.for('notification'));
   const updateconnectionConfig = useUpdateConnectionConfig();
   const connectionConfig = useRecoilValueLoadable(

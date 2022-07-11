@@ -41,12 +41,10 @@
   },
   "humm-connection": {
     "connectionType": "cell",
-    "cellType": "messaging",
+    "cellType": "notify",
     "title": "Honeyworks Notify",
     "dependencies": [
-      "@honeyworks/editor",
-      "host",
-      "data-bridge"
+      "@honeyworks/editor"
     ],
     "description": "Notify your Hive members whenever a new story is created",
     "packageLocation": "",
