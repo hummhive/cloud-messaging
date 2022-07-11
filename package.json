@@ -1,6 +1,6 @@
 {
-  "name": "@honeyworks/cloud-notify",
-  "version": "1.0.0-beta.2",
+  "name": "@honeyworks/notify",
+  "version": "1.0.0-beta.1",
   "description": "",
   "private": false,
   "module": "dist/index.js",
