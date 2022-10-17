@@ -54,7 +54,7 @@ const mapProps = () => {
   const createSender = async () => {
     try {
       setIsLoading(true);
-      const data = await honeyworksSendGridAPI.createSender(name, `${email}@em289.honeyworks.earth`, country.label, address, city);
+      const data = await honeyworksSendGridAPI.createSender(name, `${email}@em1972.humm.earth`, country.label, address, city);
       setIsLoading(false);
       if(data.success){
         await updateconnectionConfig(connectionId, {
@@ -63,6 +63,7 @@ const mapProps = () => {
           verified_sender_email: data.result.from.email,
           stepCompleted: 2
         });
+        syncMembers();
       }
     } catch (err) {
       setIsLoading(false);

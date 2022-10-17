@@ -73,9 +73,9 @@ if (connectionConfig?.content.stepCompleted === 1)
       className="email-label"
       value={email}
       type='text'
-      onChange={(e) => setEmail(e.target.value).toLowerCase()}
+      onChange={(e) => setEmail(e.target.value.toLowerCase())}
     />
-  <span style={{marginTop: "5px"}}>@em289.honeyworks.earth</span>
+  <span style={{marginTop: "5px"}}>@em1972.humm.earth</span>
   </Row>
      <Spacer height={10} />
   <Row>
