@@ -305,7 +305,7 @@ export default class HoneyworksSendGridAPI {
         "subject": title,
         "suppression_group_id": config.content.unsubscribe_group_id,
         "sender_id": config.content.verified_sender_id,
-        "html_content": appendProvider(content),
+        "html_content": appendProvider(content, hive.content.name),
       }
     }),
     }).then(async (res) => {
@@ -348,7 +348,7 @@ export default class HoneyworksSendGridAPI {
         "subject": title,
         "suppression_group_id": config.content.unsubscribe_group_id,
         "sender_id": config.content.verified_sender_id,
-        "html_content": appendProvider(content),
+        "html_content": appendProvider(content, hive.content.name),
       }
     }),
     }).then(async (res) => {
