@@ -63,7 +63,6 @@ const mapProps = () => {
           verified_sender_email: data.result.from.email,
           stepCompleted: 2
         });
-        syncMembers();
       }
     } catch (err) {
       setIsLoading(false);
